@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat</title>
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to send message
+        async function sendMessage() {
+            const username = document.getElementById("username").value;
+            const message = document.getElementById("message").value;
+
+            if (username && message) {
+                await addDoc(collection(db, "messages"), {
+                    username: username,
+                    message: message,
+                    timestamp: new Date()
+                });
+                document.getElementById("message").value = ""; // Clear input field
+            }
+        }
+
+        // Function to display messages in real-time
+        function loadMessages() {
+            const chatBox = document.getElementById("chat-box");
+            const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+
+            onSnapshot(q, (snapshot) => {
+                chatBox.innerHTML = ""; // Clear chat
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const msgElement = document.createElement("p");
+                    msgElement.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+                    chatBox.appendChild(msgElement);
+                });
+            });
+        }
+
+        // Load messages when the page loads
+        window.onload = loadMessages;
+    </script>
+</head>
+<body>
+    <h2>Live Chat</h2>
+    <div id="chat-box" style="border: 1px solid black; height: 300px; overflow-y: scroll; padding: 10px;"></div>
+    <br>
+    <input type="text" id="username" placeholder="Your Name">
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+</body>
+</html>
